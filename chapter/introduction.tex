@@ -1,0 +1,75 @@
+% 
+% #INFO: A sample chapter for use in showing the operation of `mcidoc'.
+%
+% Copyright (C) 2023-2026 D. T. McGuiness
+%
+% COPYRIGHT NOTICE:
+% -----------------
+% It may be distributed and/or modified under the conditions of the LaTeX Project Public
+% License (LPPL), either version 1.3c of this license or (at your option) any later version.
+% The latest version of this license is in the file
+%
+% https://www.latex-project.org/lppl.txt
+% 
+% This file is part of `mcidoc' and all files in that bundle must be distributed together.
+% 
+% ---------------------------------------------------------------------------------------------
+% 
+%
+
+\chapter{Introduction} % ----------------------------------------------------------------------
+
+\subsection{Motivation} % -------------------------------------------
+Over the past few years, the field of robotics has experienced significant advancements driven by more powerful actuators, highly sophisticated sensors, and increased processing power. This technological evolution has resulted in a wide variety of mobile robots capable of excellently navigating complex terrain using wheels or even articulated legs. However, a key challenge remains: the requirement of gathering external environmental data and integrating it efficiently into the robot's control loops. Although several perception systems are already widely deployed—such as LiDAR, Radar, or stereo depth cameras—they often possess a common architectural drawback: they provide geometric distance measurements but lack semantic awareness, meaning they cannot identify the specific nature of their surroundings. This limitation is where the field of computer vision comes into play.
+
+Computer vision is an ever-growing research domain with numerous applications, with mobile robotics being one of its most prominent sectors. By implementing modern computer vision methodologies, robotic systems are empowered to not only detect the physical presence of obstacles but also to classify the specific type of object encountered. This semantic intelligence allows the robot to interpret its environment contextually and adapt its behavioral strategies accordingly.
+
+%\newpage
+
+\subsection{Problem Statement} % --------------------------------------------------
+Although computer vision serves as a highly powerful tool for robotic perception and environmental data acquisition, a significant gap remains regarding the seamless integration of reliable vision pipelines into existing standardized hardware platforms, such as the TurtleBot 4. Modern deep learning architectures like YOLO provide exceptional detection accuracy, yet their execution introduces immense computational overhead. When deployed directly on resource-constrained single-board computers—such as the TurtleBot 4’s embedded Raspberry Pi 4—these frameworks suffer from severe thermal throttling, high processor utilization, and low frame rates. This latency compromises the real-time responsiveness required for safe, closed-loop robotic control.
+
+Furthermore, existing open-source solutions often lack architectural cohesion. Developing a person-following behavior requires the orchestration of heterogeneous tasks: 2D object detection, spatial 3D coordinate back-projection via depth maps, and dynamic navigation commands. In the current ROS 2 ecosystem, these components are frequently decoupled, requiring extensive custom configuration and high network bandwidth to interact without latency. Consequently, there is a distinct lack of standardized, lightweight, and robust software architectures capable of offloading heavy vision processing to external workstations without introducing connection instabilities. This research addresses this core limitation by formulating an optimized, distributed ROS 2 pipeline designed to execute person-following tasks on computationally restricted mobile robot platforms.
+ 
+%\newpage
+
+\subsection{Objectives} % -----------------------------------------------------
+The primary objective of this thesis is to implement a real-time computer vision pipeline into the TurtleBot 4 mobile robotics learning platform. To achieve intelligent environmental interaction, the robotic system must be capable of autonomously detecting objects within its integrated camera's field of view and estimating their precise three-dimensional spatial coordinates relative to its own coordinate frame. Furthermore, these extracted spatial data streams must dynamically influence the robot's control loops and behavioral states. Within the scope of this research, this workflow is demonstrated through the development of a robust person-following system, wherein the platform isolates a human target and executes safe, continuous navigation to track the user's trajectory.
+
+To accomplish these goals, the research is divided into several systematic milestones:
+\begin{itemize}
+	\item \textbf{Literature Review}: Conducting a comprehensive academic review of state-of-the-art visual navigation, spatial mapping, and landmarking methodologies utilized within mobile robotics, with a particular focus on modern deep-learning-based perception.
+	\item \textbf{Software Framework Development}: Designing and deploying a modular software architecture using industry-standard coding practices. The entire pipeline is implemented in Python within the ROS 2 environment to ensure native compatibility with modern robotic ecosystems and rapid prototyping capabilities.
+	\item \textbf{Code Reusability and Extensibility}: Packaging the final application into an encapsulated, documentation-ready framework. This structure ensures that the developed nodes can serve as a foundation for subsequent academic research, allowing others to easily adapt, scale, or build upon the code architecture.
+\end{itemize}
+ 
+%\newpage
+
+\subsection{Scope} % ---------------------------------------------------------------
+Given that computer vision and mobile robotics are expansive research fields with a vast array of potential features, establishing strict boundaries is essential to maintain a feasible project scale. To clarify the operational and developmental limits of this thesis, the following constraints define what is explicitly excluded from the scope of this research:
+
+\begin{itemize}
+	\item \textbf{Target Restriction:} The perception pipeline exclusively considers human targets. Although the underlying YOLO model is capable of detecting a multitude of object classes, all non-human classifications are actively filtered out and ignored by the software nodes.
+	\item \textbf{Environmental Constraints:} This project assumes that the TurtleBot 4 operates solely within controlled, structured indoor environments with stable flooring and standard ambient lighting. While outdoor deployment follows similar algorithmic principles, the physical drivetrain and sensor configuration of the TurtleBot 4 platform are not suited for unstructured rugged terrain.
+	\item \textbf{Exclusion of Custom Model Training:} This thesis does not encompass the training of a custom deep learning model from scratch. While model training is theoretically feasible, the extensive preprocessing requirements—such as data acquisition, dataset curation, and manual labeling of thousands of sample images—would exceed the time constraints of this bachelor thesis. Therefore, established pretrained model weights are utilized.
+	\item \textbf{Hardware Optimization Limits:} The scope is limited to a network-distributed architecture where computer vision inference is offloaded entirely to an external workstation via CycloneDDS. This project does not include the hardware-accelerated optimization of the code for execution on the camera's internal Visual Processing Unit (VPU) or the robot's embedded Single-Board Computer.
+\end{itemize}
+ 
+%\newpage
+
+\subsection{Thesis Structure} % ---------------------------------------------------
+This thesis is structured into eight logical chapters, organized as follows:
+
+\begin{itemize}
+	\item \textbf{Chapter 1: Introduction} outlines the core motivation, establishes the technical problem statement, defines the research objectives, and delineates the project's scope.
+	\item \textbf{Chapter 2: Theoretical Background} introduces the fundamental technologies, frameworks, and platforms utilized in this research, including the TurtleBot 4 learning platform, the ROS 2 ecosystem, and the YOLO object detection framework.
+	\item \textbf{Chapter 3: State of the Art} reviews recent academic and industrial advancements in mobile robotic computer vision, person detection methodologies, target-following strategies, and existing open-source ROS-based implementations.
+	\item \textbf{Chapter 4: Methodology} establishes the structural system requirements, details the distributed network architecture utilizing hardware offloading, and delineates the algorithmic designs for detection, 3D localization, and the finite state machine tracking logic.
+	\item \textbf{Chapter 5: Experimental Implementation} describes the concrete deployment environment, providing a technical breakdown of the custom-developed ROS 2 nodes, parameter configurations, and software integration tools.
+	\item \textbf{Chapter 6: Results} presents the empirical evaluation and performance metrics gathered during practical field tests, focusing on detection frame rates, localization accuracy, and obstacle avoidance behavior.
+	\item \textbf{Chapter 7: Interpretation} discusses the experimental findings, highlighting the architectural strengths, identifying systemic limitations, and contrasting the proposed solution against existing benchmarks.
+	\item \textbf{Chapter 8: Conclusion} provides a comprehensive summary of the research contributions and outlines promising directions for future work and extensibility.
+\end{itemize}
+
+
+ 

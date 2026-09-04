@@ -1,0 +1,15 @@
+# LaTeX-Hilfsdateien ignorieren
+*.aux
+*.log
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.pdf
+*.bbl
+*.blg
+*.bcf
+*.xml
+*.out
+*.lof
+*.lot

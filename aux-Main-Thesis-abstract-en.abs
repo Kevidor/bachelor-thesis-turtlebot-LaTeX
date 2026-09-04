@@ -1,0 +1,9 @@
+        
+The demand for autonomous mobile robots capable of safe and reliable human-robot interaction has grown significantly in both industrial and domestic environments. A primary challenge in this domain is implementing robust, real-time external information gathering for location data. This bachelor thesis presents the design, implementation, and experimental evaluation of a computer vision model on a TurtleBot 4 mobile robot within the Robot Operating System (ROS 2) framework, demonstrated through the example of a person-following system.
+
+To achieve this, a modern deep learning framework, You Only Look Once (YOLO), is utilized for its exceptional precision in human detection. The associated computational overhead is handled via a distributed network offloading paradigm. The system captures synchronized color and depth data using a Luxonis OAK-D Pro camera to calculate an  Objects actual location relative to its local space.
+
+A custom-developed Finite State Machine manages the control and decision-making logic through five operational states. The entire application is encapsulated and executed inside a modular ROS 2 package, which also streamlines software distribution. For locomotion, the calculated 3D target coordinates are transformed into target goals and processed by the advanced Navigation 2 (Nav2) stack, which utilizes pre-mapped static environments generated via SLAM.
+
+Experimental testing was conducted in a common indoor environment with complex geometry to demonstrate the tracking of a single human target while maintaining a strict safety distance and successfully avoiding obstacles. Ultimately, this thesis demonstrates the high value of integrating computer vision into modern robotic systems.
+        
