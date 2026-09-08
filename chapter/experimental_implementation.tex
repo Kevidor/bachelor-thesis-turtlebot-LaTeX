@@ -24,7 +24,7 @@ Architectural interactions and data flows of this node within the ROS 2 ecosyste
 	\label{fig:yolo_node_graph}
 \end{figure}
 
-The functional mechanism of the node relies on an asynchronous callback pipeline. The node subscribes to the raw image telemetry broadcast by the spatial camera on the \texttt{robot7/oakd/rgb\newline/preview/image\_raw} topic. Upon receiving a standardized ROS \texttt{sensor\_msgs/msg/Image} message, the node utilizes the \texttt{cv\_bridge} library to convert the image matrix into a BGR format compatible with OpenCV.
+The functional mechanism of the node relies on an asynchronous callback pipeline. The node subscribes to the raw image telemetry broadcast by the spatial camera on the \texttt{oakd/rgb/preview\newline/image\_raw} topic. Upon receiving a standardized ROS \texttt{sensor\_msgs/msg/Image} message, the node utilizes the \texttt{cv\_bridge} library to convert the image matrix into a BGR format compatible with OpenCV.
 
 The converted frame is subsequently processed by the YOLO object detection model. To optimize performance and ensure deterministic behavior tailored to this application, the model is configured with a strict confidence threshold ($\tau = 0.8$) and filtered to exclusively retain class ID $0$, which corresponds to the "person" label within the COCO dataset. The model extracts the resulting two-dimensional coordinates of the bounding boxes, populates a standardized \texttt{vision\_msgs/msg/Detection2DArray} message, and publishes the localized metadata to the \texttt{/yolo/detections} topic.
 
@@ -33,6 +33,8 @@ In the early stages of development, the vision pipeline was split across three d
 \lstinputlisting[linerange={113-134},language=Python,caption={Core image processing and bounding box extraction callback within the unified node.},label={lst:yolo_process}]{codes/yolo_detect.py}
 
 The operational behavior of this consolidated node can be dynamically adjusted at runtime utilizing the native ROS 2 parameter server. By toggling the \texttt{enable\_basic} and \texttt{enable\_viz} parameters respectively, the user can conditionally activate localized logging or video visualization features. The structural implementations of these optional sub-modules are presented in Listings~\ref{lst:yolo_basic} and \ref{lst:yolo_viz}.
+
+\newpage
 
 \lstinputlisting[linerange={195-204},language=Python,caption={Optional logging logic controlled via the enable\_basic parameter.},label={lst:yolo_basic}]{codes/yolo_detect.py}
 
@@ -49,17 +51,20 @@ The architectural interactions, incoming topic subscriptions, and outgoing data 
 
 \begin{figure}[!ht]
 \centering
-\includegraphics[width=0.8\linewidth]{figures/object_locator.png}
+\includegraphics[width=0.7\linewidth]{figures/object_locator.png}
 \caption[ROS 2 Node Graph for object\_locator]{Computation graph illustrating the input subscriptions from the YOLO detection node and camera topics, alongside the output spatial coordinate publishers.}
 \label{fig:locator_node_graph}
 \end{figure}
 
+\newpage
+
 To perform spatial calculations, the node subscribes to a heterogeneous array of four distinct data streams using standardized ROS~2 interfaces:
+
 \begin{itemize}
 \item \textbf{YOLO Detections Sub}: Subscribes to the \texttt{/yolo/detections} topic, ingesting messages of type \texttt{vision\_msgs/msg/Detection2DArray} to receive the bounding boxes from the perception pipeline.
-\item \textbf{Camera Info Sub}: Subscribes to the \texttt{/robot7/oakd/rgb/preview/camera\_info} topic using the \texttt{sensor\_msgs/msg/CameraInfo} message type to extract lens intrinsic parameters required for spatial back-projection.
-\item \textbf{Stereo Depth Sub}: Subscribes to the \texttt{/robot7/oakd/stereo/image\_raw} topic using the \newline \texttt{sensor\_msgs/msg/Image} message type to acquire the structured depth matrices calculated by the camera.
-\item \textbf{RGB Image Sub}: Subscribes to the \texttt{/robot7/oakd/rgb/preview/image\_raw} topic, also utilizing the \texttt{sensor\_msgs/msg/Image} type, to capture the live color frames for alignment and visualization.
+\item \textbf{Camera Info Sub}: Subscribes to the \texttt{/oakd/rgb/preview/camera\_info} topic using the \newline\texttt{sensor\_msgs/msg/CameraInfo} message type to extract lens intrinsic parameters required for spatial back-projection.
+\item \textbf{Stereo Depth Sub}: Subscribes to the \texttt{/oakd/stereo/image\_raw} topic using the \newline \texttt{sensor\_msgs/msg/Image} message type to acquire the structured depth matrices calculated by the camera.
+\item \textbf{RGB Image Sub}: Subscribes to the \texttt{/oakd/rgb/preview/image\_raw} topic, also utilizing the \texttt{sensor\_msgs/msg/Image} type, to capture the live color frames for alignment and visualization.
 \end{itemize}
 
 By fusing these internal memory variables via an asynchronous callback scheme, the node calculates the absolute Euclidean distance along the camera’s optical axis. This mathematical transformation yields the exact spatial coordinates $(X, Y, Z)$ of the target in meters, which are then continuously published to the \texttt{/yolo/object\_position} topic as a standardized \texttt{geometry\_msgs/msg/PointStamped} message.
@@ -68,7 +73,7 @@ While the primary objective of this thesis is human tracking, the localization p
 
 %\lstinputlisting[linerange={1-50},language=Python,caption={Spatial back-projection and depth fusion routine within the object\_locator node.},label={lst:locator_process}]{codes/object_locator.py}
 
-Finally, to streamline real-time validation and debugging during experimental testing, a dedicated ROS~2 parameter named \texttt{visual} was integrated into the node configuration, defaulting to a boolean value of \texttt{False}. When a user explicitly toggles this configuration flag to \texttt{True}, an optional visualization sub-module is triggered. This module spins up an additional publisher targeting the \texttt{/yolo/debug\_image} topic with a \texttt{sensor\_msgs/msg/Image} payload. This debug stream overlays the calculated spatial coordinates, distance metrics, and bounding-box targets directly onto the live color frame for visual verification. %An example layout for this visual validation is reserved in Figure~\ref{fig:locator_debug}.
+Finally, to streamline real-time validation and debugging during experimental testing, a dedicated ROS~2 parameter named \texttt{enable\_viz} was integrated into the node configuration, defaulting to a boolean value of \texttt{False}. When a user explicitly toggles this configuration flag to \texttt{True}, an optional visualization sub-module is triggered. This module spins up an additional publisher targeting the \texttt{/yolo/debug\_image} topic with a \texttt{sensor\_msgs/msg/Image} payload. This debug stream overlays the calculated spatial coordinates, distance metrics, and bounding-box targets directly onto the live color frame for visual verification. %An example layout for this visual validation is reserved in Figure~\ref{fig:locator_debug}.
 
 %\begin{figure}[!ht]
 %\centering
@@ -97,7 +102,7 @@ The baseline requirement for this navigation pipeline is a static occupancy grid
 % \lstinputlisting[linerange={1-30},language=Python,caption={Configuration and initialization scheme for the Nav2 lifecycle nodes.},label={lst:nav2_init}]{codes/navigation_integration.py}
 
 
-\section{State Machine Implementation}
+\subsection{State Machine Implementation}
 The decision-making hierarchy and navigational lifecycle of the robot are controlled by a centralized Finite State Machine (\texttt{FSM}). This software node coordinates the overall system behavior by acting as the main interface between the perception pipeline and the \texttt{Nav2} stack. The computational graph and topic layout for the state machine execution are outlined in Figure~\ref{fig:fsm_node_graph}.
 
 \begin{figure}[!ht]
@@ -109,17 +114,16 @@ The decision-making hierarchy and navigational lifecycle of the robot are contro
 
 The state machine node subscribes to the \texttt{/yolo/object\_position} topic to ingest the target's 3D spatial metadata formatted as a \texttt{geometry\_msgs/msg/PointStamped} message. Crucially, because \texttt{Nav2} actions require a definitive target orientation alongside position, the node executes an internal data conversion pipeline. The incoming point data is encapsulated and transformed into a \texttt{geometry\_msgs/msg/PoseStamped} message type, adding default orientation quaternions pointing toward the target. This generated pose is then actively dispatched as a navigational goal to the \texttt{Nav2} action servers.
 
-The operational tracking logic fluidly cycles through five distinct states based on environmental stimuli:
-\begin{itemize}
-	\item \textbf{\texttt{State.INIT}:} The startup routine responsible for setting baseline software variables and logging initial coordinates, including the robot's physical origin position when docked in its charging dock.
-	\item \textbf{\texttt{State.SEARCHING}:} Active when the perception topics yield no detections. The node bypasses the global planner and instructs the base to rotate continuously in place, scanning the environment to discover a person.
-	\item \textbf{\texttt{State.FOLLOWING}:} Executed when a valid target is identified. The node continuously intercepts the \texttt{PointStamped} coordinates, transforms them into a \texttt{PoseStamped} format, and forwards these target goals to \texttt{Nav2} to actively navigate toward the moving person.
-	\item \textbf{\texttt{State.CLOSE}:} A safety threshold intercept. If the tracking coordinates reveal that the distance to the target falls below a predefined safety margin, the node aborts the current \texttt{Nav2} path execution, halting the TurtleBot 4 to enforce a strict physical buffer zone.
-	\item \textbf{\texttt{State.LOST}:} A temporary transitional safety phase triggered upon sudden visual target loss. An internal software timer is immediately spawned. If the human target passes back into the camera's field of view before the timeout expires, the node triggers a smooth transition back into \texttt{State.FOLLOWING}, preventing abrupt stops. If the timer running out confirms a complete target loss, the system reverts to \texttt{State.SEARCHING}.
-\end{itemize}
+While the theoretical behavior and conditions of the five operational states (\texttt{INIT}, \texttt{SEARCHING}, \newline \texttt{FOLLOWING}, \texttt{CLOSE}, and \texttt{LOST}) are established in Section 4.6, their software-technical implementation is realized through a native Python class using a \texttt{match-case} control structure. The asynchronous callback routines handle incoming vision coordinates and actively manage the lifecycle of the \texttt{Nav2} action clients. To ensure that transient line-of-sight obstructions do not destabilize the network, the \texttt{State.LOST} routine utilizes a non-blocking hardware timer thread. The core code layout, object initializations, and the coordinate transformation functions of this node are referenced in Listing~\ref{lst:fsm_core}.
 
-% % NOTE: Outcommented listings to prevent compiler errors. Activate when source files are ready.
-% \lstinputlisting[linerange={1-60},language=Python,caption={State machine callback routines, PointStamped-to-PoseStamped conversion, and Nav2 action client dispatch logic.},label={lst:fsm_core}]{codes/state_machine.py}
+\newpage
+
+\lstinputlisting[linerange={308-323},language=Python,caption={Initialization and PointStamped-to-PoseStamped conversion logic inside the person\_follower node.},label={lst:fsm_core}]{codes/person_follow.py}
+
+Additionally, the state transition logic and conditional execution loops governing the operational state jumps are mapped in Listing~\ref{lst:fsm_transitions_code}.
+
+\lstinputlisting[linerange={100-262},language=Python,caption={Match-case control structure handling the asynchronous state transitions and Nav2 action dispatches.},label={lst:fsm_transitions_code}]{codes/person_follow.py}
+
 
 \section{Testing Procedure}
 To evaluate the functional reliability and structural robustness of the integrated software-hardware pipeline, a series of experimental tests was conducted. The primary objective of these procedures was to validate the real-time performance of the detection nodes, the accuracy of the spatial state machine transitions, and the physical safety features of the navigation stack under real-world conditions.

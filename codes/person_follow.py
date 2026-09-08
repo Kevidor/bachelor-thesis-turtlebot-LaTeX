@@ -307,9 +307,6 @@ class PersonFollower(Node):
 
     def send_follow_goal(self):
 
-        #if not self.target_visible():
-        #    return
-
         goal_pose = PoseStamped()
 
         goal_pose.header.frame_id = self.target_point.header.frame_id
@@ -324,18 +321,6 @@ class PersonFollower(Node):
 
         self.navigator.startToPose(goal_pose)
         self.has_goal = True
-
-#    def target_moved_significantly(self):
-#
-#        if self.goal_target_position is None:
-#            return True
-#
-#        dx = (self.target_point.point.x - self.goal_target_position.point.x)
-#        dy = (self.target_point.point.y - self.goal_target_position.point.y)
-#
-#        distance = (dx**2 + dy**2) ** 0.5
-#
-#        return distance > self.goal_update_distance
 
     def rotate(self, angle: float = 0.1):
 
